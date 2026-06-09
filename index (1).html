@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Freddie's Assistant</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --bg-secondary: #f5f5f4;
+    --bg-tertiary: #eeede9;
+    --text: #1a1a1a;
+    --text-secondary: #6b6b6b;
+    --text-tertiary: #9a9a9a;
+    --border: rgba(0,0,0,0.12);
+    --border-md: rgba(0,0,0,0.2);
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1c;
+      --bg-secondary: #272727;
+      --bg-tertiary: #323232;
+      --text: #f0f0f0;
+      --text-secondary: #a0a0a0;
+      --text-tertiary: #666666;
+      --border: rgba(255,255,255,0.1);
+      --border-md: rgba(255,255,255,0.2);
+    }
+  }
+
+  html, body {
+    height: 100%;
+    font-family: var(--font);
+    background: var(--bg-tertiary);
+    color: var(--text);
+  }
+
+  #app {
+    max-width: 520px;
+    margin: 0 auto;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    border-left: 0.5px solid var(--border);
+    border-right: 0.5px solid var(--border);
+  }
+
+  #header {
+    padding: 16px 16px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  #header h1 {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  #header p {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: -6px;
+  }
+
+  #tabs {
+    display: flex;
+    gap: 6px;
+  }
+
+  .tab {
+    padding: 6px 14px;
+    font-size: 13px;
+    border: 0.5px solid var(--border-md);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: var(--font);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .tab.active {
+    background: var(--bg-secondary);
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  #panels {
+    flex: 1;
+    overflow: hidden;
+    padding: 12px 16px 16px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel { display: none; flex-direction: column; flex: 1; overflow: hidden; gap: 10px; }
+  .panel.active { display: flex; }
+
+  #chat-area {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 4px 0;
+  }
+
+  .msg {
+    max-width: 88%;
+    padding: 10px 14px;
+    border-radius: var(--radius-lg);
+    font-size: 14px;
+    line-height: 1.6;
+    border: 0.5px solid var(--border);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .msg.user {
+    align-self: flex-end;
+    background: var(--bg-secondary);
+  }
+
+  .msg.assistant {
+    align-self: flex-start;
+    background: var(--bg);
+  }
+
+  .msg.thinking {
+    align-self: flex-start;
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    font-size: 13px;
+    font-style: italic;
+    padding-left: 0;
+  }
+
+  #input-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+
+  #input-row textarea {
+    flex: 1;
+    resize: none;
+    min-height: 44px;
+    max-height: 120px;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: var(--font);
+    border-radius: var(--radius-md);
+    border: 0.5px solid var(--border-md);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.4;
+    overflow-y: auto;
+  }
+
+  #input-row textarea:focus { outline: none; border-color: var(--border-md); }
+
+  #input-row button {
+    height: 44px;
+    padding: 0 16px;
+    font-size: 13px;
+    border-radius: var(--radius-md);
+    border: 0.5px solid var(--border-md);
+    cursor: pointer;
+    background: var(--bg-secondary);
+    color: var(--text);
+    font-family: var(--font);
+    white-space: nowrap;
+  }
+
+  #input-row button:hover { background: var(--bg-tertiary); }
+
+  .panel-add-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .panel-add-row input, .panel-add-row textarea {
+    flex: 1;
+    padding: 9px 12px;
+    font-size: 14px;
+    font-family: var(--font);
+    border-radius: var(--radius-md);
+    border: 0.5px solid var(--border-md);
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  .panel-add-row textarea {
+    resize: none;
+    height: 70px;
+    line-height: 1.5;
+  }
+
+  .panel-add-row input:focus, .panel-add-row textarea:focus { outline: none; }
+
+  .panel-add-row button {
+    padding: 9px 14px;
+    font-size: 13px;
+    font-family: var(--font);
+    border-radius: var(--radius-md);
+    border: 0.5px solid var(--border-md);
+    cursor: pointer;
+    background: var(--bg-secondary);
+    color: var(--text);
+    align-self: flex-end;
+  }
+
+  .list-area {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .empty-state {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    padding: 8px 0;
+  }
+
+  .task-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg);
+    font-size: 14px;
+  }
+
+  .task-item input[type=checkbox] {
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .task-item .task-text { flex: 1; line-height: 1.4; }
+  .task-item .task-text.done { text-decoration: line-through; color: var(--text-tertiary); }
+
+  .task-item .del-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    font-size: 16px;
+    padding: 0 2px;
+    line-height: 1;
+  }
+
+  .note-item {
+    padding: 10px 12px;
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg);
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    position: relative;
+  }
+
+  .note-ts {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-bottom: 4px;
+  }
+
+  .note-del {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    font-size: 15px;
+    line-height: 1;
+  }
+
+  #api-bar {
+    padding: 10px 16px;
+    background: var(--bg-secondary);
+    border-top: 0.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  #api-bar label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+
+  #api-key-input {
+    flex: 1;
+    padding: 6px 10px;
+    font-size: 13px;
+    font-family: var(--font);
+    border-radius: var(--radius-md);
+    border: 0.5px solid var(--border-md);
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  #api-key-input:focus { outline: none; }
+
+  #api-save-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    font-family: var(--font);
+    border-radius: var(--radius-md);
+    border: 0.5px solid var(--border-md);
+    cursor: pointer;
+    background: var(--bg);
+    color: var(--text);
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="header">
+    <div>
+      <h1>Freddie's Assistant</h1>
+      <p>Brutal. Direct. No fluff.</p>
+    </div>
+    <div id="tabs">
+      <button class="tab active" onclick="switchTab('chat', this)">
+        <i class="ti ti-message-circle" aria-hidden="true"></i> Chat
+      </button>
+      <button class="tab" onclick="switchTab('tasks', this)">
+        <i class="ti ti-check" aria-hidden="true"></i> Tasks
+      </button>
+      <button class="tab" onclick="switchTab('notes', this)">
+        <i class="ti ti-notes" aria-hidden="true"></i> Notes
+      </button>
+    </div>
+  </div>
+
+  <div id="panels">
+    <div class="panel active" id="panel-chat">
+      <div id="chat-area">
+        <div class="msg assistant">What do you need?</div>
+      </div>
+      <div id="input-row">
+        <textarea id="msg-input" placeholder="Ask anything..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+        <button onclick="sendMsg()">Send</button>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-tasks">
+      <div class="panel-add-row">
+        <input id="task-input" type="text" placeholder="Add a task..." onkeydown="if(event.key==='Enter')addTask()" />
+        <button onclick="addTask()">Add</button>
+      </div>
+      <div class="list-area" id="task-list"></div>
+    </div>
+
+    <div class="panel" id="panel-notes">
+      <div class="panel-add-row" style="flex-direction:column;">
+        <textarea id="note-input" placeholder="Type a note..."></textarea>
+        <div style="display:flex;justify-content:flex-end;">
+          <button onclick="addNote()" style="align-self:flex-end;">Save note</button>
+        </div>
+      </div>
+      <div class="list-area" id="note-list"></div>
+    </div>
+  </div>
+
+  <div id="api-bar">
+    <label for="api-key-input"><i class="ti ti-key" aria-hidden="true"></i> API key</label>
+    <input id="api-key-input" type="password" placeholder="sk-ant-..." />
+    <button id="api-save-btn" onclick="saveKey()">Save</button>
+  </div>
+</div>
+
+<script>
+const SYSTEM = `You are Freddie's brutal, direct personal assistant. No fluff, no filler, no pleasantries. Get to the point immediately.
+
+Context about Freddie:
+- Works in customer service in the scrap/recycling industry
+- Runs a fleet business managing multiple HGVs (PN72GKU, PN72GKP, DK75UDU, EU63FCV, MT21TWK, PX65BOU, SP25CON, KS22KHL, AMB5, AMB6, C218034)
+- Strong Excel automation skills — reporting, dashboards, data cleaning
+- Building freelance income stream from Excel automation via direct outreach
+- Goal: replace full income within 3-5 years through automated/semi-automated businesses
+- Building a personal AI assistant (Next.js, Supabase, Claude API, Alpaca trading)
+- MacBook Air M2 arriving in ~3 weeks — that's when the big build starts
+- Prefers structured plans, bullet points, step-by-step instructions
+- Wants brutal honesty, not validation
+
+Rules:
+- Never say "Great question" or any filler
+- Lead with the answer, not the context
+- If asked for an opinion, give one — don't hedge
+- If something is a bad idea, say so directly
+- Keep responses concise unless depth is needed
+- If you don't know something, say so`;
+
+let history = [];
+let tasks = JSON.parse(localStorage.getItem('fa_tasks') || '[]');
+let notes = JSON.parse(localStorage.getItem('fa_notes') || '[]');
+
+function getKey() {
+  return localStorage.getItem('fa_apikey') || '';
+}
+
+function saveKey() {
+  const val = document.getElementById('api-key-input').value.trim();
+  if (val) {
+    localStorage.setItem('fa_apikey', val);
+    document.getElementById('api-save-btn').textContent = 'Saved ✓';
+    setTimeout(() => document.getElementById('api-save-btn').textContent = 'Save', 2000);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = getKey();
+  if (saved) document.getElementById('api-key-input').value = saved;
+  renderTasks();
+  renderNotes();
+});
+
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+}
+
+function addBubble(role, text) {
+  const area = document.getElementById('chat-area');
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.textContent = text;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+  return div;
+}
+
+async function sendMsg() {
+  const input = document.getElementById('msg-input');
+  const text = input.value.trim();
+  if (!text) return;
+  const key = getKey();
+  if (!key) { addBubble('assistant', 'Add your Anthropic API key at the bottom first.'); return; }
+  input.value = '';
+  input.style.height = 'auto';
+  addBubble('user', text);
+  history.push({ role: 'user', content: text });
+  const thinking = addBubble('thinking', 'Thinking...');
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: SYSTEM,
+        messages: history
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const reply = data.content.map(b => b.text || '').join('');
+    thinking.remove();
+    addBubble('assistant', reply);
+    history.push({ role: 'assistant', content: reply });
+  } catch(e) {
+    thinking.remove();
+    addBubble('assistant', 'Error: ' + e.message);
+  }
+}
+
+function addTask() {
+  const input = document.getElementById('task-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  tasks.push({ id: Date.now(), text, done: false });
+  localStorage.setItem('fa_tasks', JSON.stringify(tasks));
+  renderTasks();
+}
+
+function toggleTask(id) {
+  tasks = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
+  localStorage.setItem('fa_tasks', JSON.stringify(tasks));
+  renderTasks();
+}
+
+function deleteTask(id) {
+  tasks = tasks.filter(t => t.id !== id);
+  localStorage.setItem('fa_tasks', JSON.stringify(tasks));
+  renderTasks();
+}
+
+function renderTasks() {
+  const list = document.getElementById('task-list');
+  list.innerHTML = '';
+  if (!tasks.length) {
+    list.innerHTML = '<p class="empty-state">No tasks yet.</p>';
+    return;
+  }
+  tasks.forEach(t => {
+    const div = document.createElement('div');
+    div.className = 'task-item';
+    div.innerHTML = `<input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTask(${t.id})" /><span class="task-text ${t.done ? 'done' : ''}">${escHtml(t.text)}</span><button class="del-btn" onclick="deleteTask(${t.id})" aria-label="Delete task"><i class="ti ti-x" aria-hidden="true"></i></button>`;
+    list.appendChild(div);
+  });
+}
+
+function addNote() {
+  const input = document.getElementById('note-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  const now = new Date().toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  notes.unshift({ id: Date.now(), text, ts: now });
+  localStorage.setItem('fa_notes', JSON.stringify(notes));
+  renderNotes();
+}
+
+function deleteNote(id) {
+  notes = notes.filter(n => n.id !== id);
+  localStorage.setItem('fa_notes', JSON.stringify(notes));
+  renderNotes();
+}
+
+function renderNotes() {
+  const list = document.getElementById('note-list');
+  list.innerHTML = '';
+  if (!notes.length) {
+    list.innerHTML = '<p class="empty-state">No notes yet.</p>';
+    return;
+  }
+  notes.forEach(n => {
+    const div = document.createElement('div');
+    div.className = 'note-item';
+    div.innerHTML = `<div class="note-ts">${n.ts}</div><div>${escHtml(n.text)}</div><button class="note-del" onclick="deleteNote(${n.id})" aria-label="Delete note"><i class="ti ti-x" aria-hidden="true"></i></button>`;
+    list.appendChild(div);
+  });
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
